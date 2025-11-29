@@ -33,12 +33,22 @@ class Api::V1::AttemptsController < ApplicationController
       # Calculate and save the score
       @attempt.calculate_score!
 
+      # Reload to get fresh associations
+      @attempt.reload
+
       render json: {
-        attempt: @attempt,
+        attempt: {
+          id: @attempt.id,
+          quiz_id: @attempt.quiz_id,
+          sore: @attempt.sore,
+          created_at: @attempt.created_at,
+          updated_at: @attempt.updated_at,
+          answers: @attempt.answers.as_json(include: { question: { include: :options } })
+        },
         score: @attempt.sore,
         total_questions: @quiz.questions.count,
-        quiz: @quiz
-      }, include: { answers: { include: :question } }, status: :created
+        quiz: @quiz.as_json(only: [:id, :title])
+      }, status: :created
     else
       render json: { errors: @attempt.errors.full_messages }, status: :unprocessable_entity
     end
